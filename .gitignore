@@ -1,0 +1,10 @@
+node_modules/
+.next/
+.data/
+.env*
+!.env.example
+*.tsbuildinfo
+.DS_Store
+# Cloudflare tunnel credentials never belong in the repo.
+*.pem
+.cloudflared/

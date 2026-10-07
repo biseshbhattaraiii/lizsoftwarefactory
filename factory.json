@@ -1,0 +1,15 @@
+{
+  "domain": "lizstudio.au",
+  "tunnel": "lizstudio",
+  "apps": [
+    {
+      "name": "stickies",
+      "title": "Stickies",
+      "description": "Collaborative sticky notes for a team that stay on top of your screen.",
+      "dir": "apps/stickies",
+      "path": "/apps/stickies",
+      "port": 3100,
+      "status": "experimental"
+    }
+  ]
+}
