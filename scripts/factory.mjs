@@ -8,10 +8,12 @@
 //   node scripts/factory.mjs install <app|all>   build + install/restart the systemd service
 //   node scripts/factory.mjs deploy <app|all>    git pull, then install
 //   node scripts/factory.mjs tunnel-config       write /etc/cloudflared/config.yml from factory.json
+//   node scripts/factory.mjs autodeploy          pull new commits; redeploy only the apps that changed
+//   node scripts/factory.mjs install-autodeploy  run autodeploy every minute (systemd timer)
 //   node scripts/factory.mjs status
 //
-// Env: LIZ_LISTEN_HOST (default 127.0.0.1) - set 0.0.0.0 to also expose app ports
-// directly, e.g. before the tunnel is live.
+// Server-only overrides go in factory.local.json (gitignored), e.g.
+//   { "listenHost": "0.0.0.0" }  to also expose app ports directly before the tunnel is live.
 
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
@@ -19,9 +21,13 @@ import os from "node:os";
 import path from "node:path";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
-const config = JSON.parse(fs.readFileSync(path.join(ROOT, "factory.json"), "utf8"));
+const readJson = (file, fallback) =>
+  fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, "utf8")) : fallback;
+const config = readJson(path.join(ROOT, "factory.json"));
+const local = readJson(path.join(ROOT, "factory.local.json"), {});
 const user = os.userInfo().username;
-const host = process.env.LIZ_LISTEN_HOST ?? "127.0.0.1";
+const host = process.env.LIZ_LISTEN_HOST ?? local.listenHost ?? "127.0.0.1";
+const CRED_DIR = path.join(os.homedir(), ".cloudflared");
 
 const run = (cmd, args, opts = {}) => execFileSync(cmd, args, { stdio: "inherit", ...opts });
 const sudoWrite = (file, content) =>
@@ -78,7 +84,7 @@ WantedBy=multi-user.target
 }
 
 function tunnelConfig() {
-  const credDir = path.join(os.homedir(), ".cloudflared");
+  const credDir = CRED_DIR;
   const creds = fs.existsSync(credDir)
     ? fs.readdirSync(credDir).filter((f) => /^[0-9a-f-]{36}\.json$/.test(f))
     : [];
@@ -111,6 +117,74 @@ ${rules}
   console.log("✓ Wrote /etc/cloudflared/config.yml");
 }
 
+const git = (...args) => execFileSync("git", args, { cwd: ROOT, encoding: "utf8" }).trim();
+
+/** Fast-forwards to origin/main and hands the changed files to the newly pulled script. */
+function autodeploy() {
+  git("fetch", "--quiet", "origin", "main");
+  const head = git("rev-parse", "HEAD");
+  const remote = git("rev-parse", "origin/main");
+  if (head === remote) return;
+  const changed = git("diff", "--name-only", head, remote).split("\n").filter(Boolean);
+  git("merge", "--quiet", "--ff-only", remote);
+  console.log(`▸ ${head.slice(0, 7)} → ${remote.slice(0, 7)} (${changed.length} files changed)`);
+  // Re-exec so changes to this script or factory.json take effect in the same run.
+  run(process.execPath, [path.join(ROOT, "scripts/factory.mjs"), "deploy-changed", ...changed]);
+}
+
+function deployChanged(files) {
+  const everything = files.includes("factory.json");
+  const targets = everything
+    ? config.apps
+    : config.apps.filter((a) => files.some((f) => f.startsWith(`${a.dir}/`)));
+  if (!targets.length) return console.log("No app changes to deploy.");
+
+  const failed = [];
+  for (const app of targets) {
+    try {
+      install(app);
+    } catch {
+      failed.push(app.name);
+      console.error(`✗ ${app.name} failed to deploy`);
+    }
+  }
+  // New or moved apps need new tunnel routes (only once the tunnel exists).
+  if (everything && fs.existsSync("/etc/cloudflared/config.yml")) {
+    tunnelConfig();
+    run("sudo", ["systemctl", "restart", "cloudflared"]);
+  }
+  if (failed.length) fail(`Deploy failed for: ${failed.join(", ")}`);
+}
+
+function installAutodeploy() {
+  const service = `[Unit]
+Description=liz.studio: deploy new commits from GitHub
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=${user}
+WorkingDirectory=${ROOT}
+ExecStart=${process.execPath} ${ROOT}/scripts/factory.mjs autodeploy
+`;
+  const timer = `[Unit]
+Description=liz.studio: check GitHub for new commits every minute
+
+[Timer]
+OnBootSec=1min
+OnUnitInactiveSec=1min
+
+[Install]
+WantedBy=timers.target
+`;
+  sudoWrite("/etc/systemd/system/liz-autodeploy.service", service);
+  sudoWrite("/etc/systemd/system/liz-autodeploy.timer", timer);
+  run("sudo", ["systemctl", "daemon-reload"]);
+  run("sudo", ["systemctl", "enable", "--now", "liz-autodeploy.timer"]);
+  console.log(`✓ Auto-deploy on: pushes to main deploy within about a minute (from ${ROOT}).`);
+}
+
 function status() {
   for (const app of config.apps) {
     let state = "not installed";
@@ -121,6 +195,7 @@ function status() {
     }
     console.log(`${app.name.padEnd(16)} ${state.padEnd(10)} :${app.port}  https://${config.domain}${app.path}`);
   }
+  console.log(`\nDeployed commit: ${git("log", "-1", "--format=%h %s (%cr)")}`);
 }
 
 const [cmd, arg] = process.argv.slice(2);
@@ -138,9 +213,20 @@ switch (cmd) {
   case "tunnel-config":
     tunnelConfig();
     break;
+  case "autodeploy":
+    autodeploy();
+    break;
+  case "deploy-changed":
+    deployChanged(process.argv.slice(3));
+    break;
+  case "install-autodeploy":
+    installAutodeploy();
+    break;
   case "status":
     status();
     break;
   default:
-    fail("Usage: node scripts/factory.mjs <build|install|deploy> <app|all> | tunnel-config | status");
+    fail(
+      "Usage: node scripts/factory.mjs <build|install|deploy> <app|all> | autodeploy | install-autodeploy | tunnel-config | status",
+    );
 }

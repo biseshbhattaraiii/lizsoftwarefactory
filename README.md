@@ -22,15 +22,15 @@ lizstudio.au/apps/*   ─▶ edge-router Worker ─▶ apps-origin.lizstudio.au 
 
 ## Set up a VPS
 
-Requires Ubuntu or Debian, Node.js 20+, and sudo.
+Requires Ubuntu or Debian, Node.js 20+, and passwordless sudo.
 
 ```bash
-git clone https://github.com/biseshbhattaraiii/lizsoftwarefactory.git
-cd lizsoftwarefactory
+git clone https://github.com/biseshbhattaraiii/lizsoftwarefactory.git ~/liz-deploy
+cd ~/liz-deploy
 ./scripts/setup-vps.sh
 ```
 
-This installs `cloudflared`, then builds and starts every app. Once `lizstudio.au` shows **Active** in the Cloudflare dashboard, connect the tunnel (one time only):
+This installs `cloudflared`, builds and starts every app, and turns on auto-deploy. Once `lizstudio.au` shows **Active** in the Cloudflare dashboard, connect the tunnel (one time only):
 
 ```bash
 cloudflared tunnel login                       # opens a link: pick lizstudio.au
@@ -45,12 +45,29 @@ cd infra/edge-router && npm ci && npx wrangler login && npx wrangler deploy
 
 Before the nameserver switch, make sure Cloudflare's DNS has the homepage's records (Cloudflare copies most of them when you add the site). Otherwise the homepage goes down.
 
+## Push to deploy
+
+Push to `main`, and it's live within a couple of minutes. Nothing else to run.
+
+| What changed | Who deploys it | How |
+| --- | --- | --- |
+| `apps/<name>/**` | the VPS | `liz-autodeploy.timer` checks GitHub every minute, pulls, then rebuilds and restarts only the apps whose folders changed |
+| `factory.json` | the VPS | redeploys every app and refreshes the tunnel routes |
+| `infra/edge-router/**` | Cloudflare | Workers Builds (Cloudflare's Git integration, like Pages) runs `npx wrangler deploy` |
+
+The repo is public, so the VPS pulls with no credentials, and GitHub holds no secrets. Deploy from a clone used only for deploying (e.g. `~/liz-deploy`), and do development in another clone.
+
+**Connect the Worker to Cloudflare (once):** Cloudflare dashboard → Workers & Pages → Create → Import a repository → `lizsoftwarefactory`. Then set:
+- Root directory: `infra/edge-router`
+- Deploy command: `npx wrangler deploy`
+- Build watch paths: include `infra/edge-router/*`, so app pushes don't redeploy the Worker
+
 ## Day to day
 
 ```bash
-node scripts/factory.mjs status               # what's running, and where
-node scripts/factory.mjs deploy stickies      # git pull, rebuild, restart one app
-node scripts/factory.mjs deploy all
+node scripts/factory.mjs status                     # what's running, and the deployed commit
+journalctl -u liz-autodeploy -n 50                  # recent auto-deploys and any build errors
+node scripts/factory.mjs deploy stickies            # manual: pull, rebuild, restart one app
 ```
 
 ## Add an app

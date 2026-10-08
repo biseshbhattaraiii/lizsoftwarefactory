@@ -5,6 +5,9 @@ node_modules/
 !.env.example
 *.tsbuildinfo
 .DS_Store
+# Server-only overrides
+factory.local.json
+.wrangler/
 # Cloudflare tunnel credentials never belong in the repo.
 *.pem
 .cloudflared/
