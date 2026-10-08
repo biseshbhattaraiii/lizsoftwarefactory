@@ -2,7 +2,7 @@
 // liz.studio factory CLI: builds apps, runs them as systemd services, and
 // routes them through a Cloudflare Tunnel, all driven by factory.json.
 // The tunnel only serves config.originHost; the edge-router Worker forwards
-// lizstudio.au/apps/* there, so the homepage on lizstudio.au is never touched.
+// lizstudio.io/apps/* there, so the homepage on lizstudio.io is never touched.
 //
 //   node scripts/factory.mjs build <app|all>
 //   node scripts/factory.mjs install <app|all>   build + install/restart the systemd service

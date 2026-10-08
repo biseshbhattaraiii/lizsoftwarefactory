@@ -1,6 +1,6 @@
 {
-  "domain": "lizstudio.au",
-  "originHost": "apps-origin.lizstudio.au",
+  "domain": "lizstudio.io",
+  "originHost": "apps-origin.lizstudio.io",
   "tunnel": "lizstudio",
   "apps": [
     {

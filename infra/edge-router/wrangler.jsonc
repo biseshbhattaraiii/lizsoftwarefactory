@@ -1,5 +1,5 @@
-// Sends lizstudio.au/apps/* to the factory VPS (through the Cloudflare Tunnel's
-// hostname). Every other path on lizstudio.au keeps going to the homepage host.
+// Sends lizstudio.io/apps/* to the factory VPS (through the Cloudflare Tunnel's
+// hostname). Every other path on lizstudio.io keeps going to the homepage host.
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "liz-edge-router",
@@ -7,11 +7,11 @@
   "compatibility_date": "2026-10-08",
   "workers_dev": false,
   "routes": [
-    { "pattern": "lizstudio.au/apps", "zone_name": "lizstudio.au" },
-    { "pattern": "lizstudio.au/apps/*", "zone_name": "lizstudio.au" }
+    { "pattern": "lizstudio.io/apps", "zone_name": "lizstudio.io" },
+    { "pattern": "lizstudio.io/apps/*", "zone_name": "lizstudio.io" }
   ],
   "vars": {
-    "ORIGIN_HOST": "apps-origin.lizstudio.au"
+    "ORIGIN_HOST": "apps-origin.lizstudio.io"
   },
   "observability": { "enabled": true }
 }

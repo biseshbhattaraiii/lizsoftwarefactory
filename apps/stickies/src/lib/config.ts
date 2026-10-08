@@ -1,5 +1,5 @@
 /**
- * Set when the app is served under a sub-path (e.g. /apps/stickies on lizstudio.au).
+ * Set when the app is served under a sub-path (e.g. /apps/stickies on lizstudio.io).
  * Next adds it to links and navigation, but not to fetch/EventSource URLs, so use apiUrl().
  */
 export const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
