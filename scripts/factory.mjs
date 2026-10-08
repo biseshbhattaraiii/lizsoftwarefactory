@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 // liz.studio factory CLI: builds apps, runs them as systemd services, and
 // routes them through a Cloudflare Tunnel, all driven by factory.json.
+// The tunnel only serves config.originHost; the edge-router Worker forwards
+// lizstudio.au/apps/* there, so the homepage on lizstudio.au is never touched.
 //
 //   node scripts/factory.mjs build <app|all>
 //   node scripts/factory.mjs install <app|all>   build + install/restart the systemd service
@@ -90,7 +92,7 @@ function tunnelConfig() {
   const escape = (p) => p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const rules = config.apps
     .map(
-      (a) => `  - hostname: ${config.domain}
+      (a) => `  - hostname: ${config.originHost}
     path: ^${escape(a.path)}(/.*)?$
     service: http://127.0.0.1:${a.port}`,
     )

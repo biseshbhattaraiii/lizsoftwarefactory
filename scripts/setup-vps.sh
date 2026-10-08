@@ -26,8 +26,9 @@ domain shows "Active" in the Cloudflare dashboard):
 
   cloudflared tunnel login                          # opens a link; pick the domain
   cloudflared tunnel create lizstudio
-  cloudflared tunnel route dns lizstudio lizstudio.au
+  cloudflared tunnel route dns lizstudio apps-origin.lizstudio.au   # never the bare domain: that's the homepage
   node scripts/factory.mjs tunnel-config
   sudo cloudflared service install && sudo systemctl restart cloudflared
+  cd infra/edge-router && npm ci && npx wrangler login && npx wrangler deploy
 
 NEXT
