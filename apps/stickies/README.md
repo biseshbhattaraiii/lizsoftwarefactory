@@ -42,3 +42,7 @@ Inside the factory this app is served at `/apps/stickies`: `scripts/factory.mjs`
 **Security model.** No accounts: the chapter link contains a random 22-character token, and knowing it is what grants access. The database tables have row-level security on with no policies, so the browser's publishable key can't read them; every read and write goes through the API, which checks the token. Note HTML is sanitized to plain formatting tags before it's rendered.
 
 **Concurrent edits.** The last write wins per note. While you're typing in a note, other people's changes to that note are held back and applied when you click away, so your cursor doesn't jump. Drawings never conflict: each stroke is stored separately.
+
+## Deploying
+
+Push to `main`. The factory VPS notices within a minute and rebuilds and restarts only this app (see the root README, "Push to deploy").
