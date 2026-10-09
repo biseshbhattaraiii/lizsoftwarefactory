@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>liz.studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..900,0..100;1,9..144,300..900,0..100&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream: #f4efe6;
+    --cream-deep: #ece5d6;
+    --ink: #161513;
+    --ink-soft: #2a2723;
+    --lime: #c8ff3a;
+    --lime-deep: #a8e017;
+    --tomato: #ff5b3a;
+    --muted: #8a857c;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  html, body{
+    height:100%;
+    overflow:hidden;
+    background:var(--cream);
+    color:var(--ink);
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  body{
+    background-image:
+      radial-gradient(circle at 18% 12%, rgba(200,255,58,0.22), transparent 42%),
+      radial-gradient(circle at 82% 88%, rgba(255,91,58,0.10), transparent 45%);
+  }
+
+  /* Grain overlay */
+  body::before{
+    content:"";
+    position:fixed;inset:0;pointer-events:none;z-index:50;opacity:0.55;
+    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.06 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    mix-blend-mode:multiply;
+  }
+
+  ::selection{background:var(--lime);color:var(--ink)}
+
+  .splash{
+    position:relative;
+    width:100%;height:100%;
+    display:flex;flex-direction:column;
+    padding:32px;
+  }
+
+  /* Top bar */
+  .top{
+    display:flex;justify-content:space-between;align-items:center;
+    font-size:11px;letter-spacing:0.18em;text-transform:uppercase;
+    color:var(--ink-soft);
+    opacity:0;
+    animation:fadeIn 0.6s ease 0.2s forwards;
+  }
+  .top .left{display:flex;align-items:center;gap:10px}
+  .top .pulse{
+    width:6px;height:6px;border-radius:50%;background:var(--lime-deep);
+    box-shadow:0 0 0 0 var(--lime-deep);
+    animation:pulse 2s infinite 1s;
+  }
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 rgba(168,224,23,0.65)}
+    70%{box-shadow:0 0 0 8px rgba(168,224,23,0)}
+    100%{box-shadow:0 0 0 0 rgba(168,224,23,0)}
+  }
+
+  .center{
+    flex:1;
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    position:relative;
+  }
+
+  /* Wordmark - liz */
+  .wordmark{
+    font-family:'Fraunces',serif;
+    font-weight:500;
+    font-variation-settings:"SOFT" 100, "opsz" 144;
+    font-size: clamp(96px, 20vw, 280px);
+    line-height:0.85;
+    letter-spacing:-0.055em;
+    color:var(--ink);
+    display:flex;align-items:baseline;
+    position:relative;
+  }
+
+  /* "li" slides in */
+  .wordmark .li{
+    display:inline-block;
+    opacity:0;
+    transform:translateX(-30px);
+    animation:slideInLeft 0.7s cubic-bezier(.2,.9,.3,1.1) 0.3s forwards;
+  }
+  @keyframes slideInLeft{
+    to{opacity:1;transform:translateX(0)}
+  }
+
+  /* z pops, then sleeps */
+  .wordmark .z{
+    display:inline-block;
+    opacity:0;
+    transform:translateY(20px) scale(0.7);
+  }
+  .wordmark .z.z1{ animation: zPop 0.55s cubic-bezier(.2,.9,.3,1.4) 0.75s forwards, zBreathe1 4s ease-in-out 2.2s infinite; }
+  .wordmark .z.z2{ animation: zPop 0.55s cubic-bezier(.2,.9,.3,1.4) 0.95s forwards, zBreathe2 4s ease-in-out 2.4s infinite; }
+
+  @keyframes zPop{
+    to{opacity:1;transform:translateY(0) scale(1)}
+  }
+
+  /* Subtle sleeping z stagger */
+  @keyframes zBreathe1{
+    0%,100%{transform:translateY(0) rotate(0deg)}
+    50%{transform:translateY(-5%) rotate(-2deg)}
+  }
+  @keyframes zBreathe2{
+    0%,100%{transform:translateY(0) rotate(0deg)}
+    50%{transform:translateY(-10%) rotate(3deg)}
+  }
+
+  /* dot + .studio */
+  .wordmark .dot{
+    color:var(--lime-deep);
+    display:inline-block;
+    opacity:0;
+    transform:scale(0);
+    animation: dotPop 0.4s cubic-bezier(.2,.9,.3,1.6) 1.2s forwards;
+  }
+  @keyframes dotPop{ to{opacity:1;transform:scale(1)} }
+
+  .wordmark .studio{
+    font-family:'Instrument Serif', serif;
+    font-style:italic;
+    font-weight:400;
+    font-size: clamp(30px, 6.5vw, 84px);
+    letter-spacing:0.02em;
+    color: var(--ink-soft);
+    margin-left:0.32em;
+    align-self:baseline;
+    opacity:0;
+    transform:translateX(-10px);
+    animation: studioIn 0.6s ease 1.35s forwards;
+  }
+  @keyframes studioIn{ to{opacity:1;transform:translateX(0)} }
+
+  /* Tagline */
+  .tagline{
+    margin-top:36px;
+    font-family:'Fraunces', serif;
+    font-weight:400;
+    font-variation-settings:"SOFT" 100, "opsz" 144;
+    font-size: clamp(18px, 2.4vw, 28px);
+    letter-spacing:-0.02em;
+    color:var(--ink-soft);
+    text-align:center;
+    opacity:0;
+    transform:translateY(10px);
+    animation: taglineIn 0.7s ease 1.6s forwards;
+  }
+  .tagline em{
+    font-family:'Instrument Serif', serif;
+    font-style:italic;
+    color:var(--ink);
+  }
+  .tagline .taste{
+    position:relative;display:inline-block;
+  }
+  .tagline .taste::after{
+    content:"";
+    position:absolute;left:-4%;right:-4%;bottom:8%;
+    height:36%;
+    background:var(--lime);
+    z-index:-1;
+    border-radius:3px;
+    transform:rotate(-1deg) scaleX(0);
+    transform-origin:left center;
+    animation: highlightIn 0.5s cubic-bezier(.2,.9,.3,1.1) 2.1s forwards;
+  }
+  @keyframes highlightIn{ to{transform:rotate(-1deg) scaleX(1)} }
+
+  @keyframes taglineIn{ to{opacity:1;transform:translateY(0)} }
+
+  /* Loader */
+  .loader{
+    margin-top:48px;
+    width:min(280px, 60vw);
+    height:2px;
+    background:rgba(22,21,19,0.1);
+    border-radius:100px;
+    overflow:hidden;
+    opacity:0;
+    animation: fadeIn 0.5s ease 1.9s forwards;
+  }
+  .loader-fill{
+    height:100%;
+    background:var(--ink);
+    border-radius:100px;
+    transform-origin:left;
+    transform:scaleX(0);
+    animation: loaderFill 2.2s cubic-bezier(.4,0,.2,1) 2.1s forwards;
+  }
+  @keyframes loaderFill{
+    0%{transform:scaleX(0)}
+    100%{transform:scaleX(1)}
+  }
+
+  /* Bottom bar */
+  .bottom{
+    display:flex;justify-content:space-between;align-items:center;
+    font-size:11px;letter-spacing:0.16em;text-transform:uppercase;
+    color:var(--muted);
+    opacity:0;
+    animation:fadeIn 0.6s ease 2.4s forwards;
+  }
+  @keyframes fadeIn{ to{opacity:1} }
+
+  /* Sticker accents */
+  .sticker{
+    position:absolute;
+    padding:7px 13px;border-radius:100px;
+    font-family:'JetBrains Mono', monospace;font-size:11px;font-weight:500;
+    border:1.5px solid var(--ink);
+    box-shadow:0 4px 0 var(--ink);
+    opacity:0;
+    z-index:2;
+  }
+  .sticker.s1{
+    top:20%;left:10%;
+    background:var(--lime);
+    transform:rotate(-8deg);
+    animation: stickerIn 0.5s cubic-bezier(.2,.9,.3,1.3) 1.7s forwards, stickerFloat 5s ease-in-out 2.4s infinite;
+  }
+  .sticker.s2{
+    bottom:24%;right:10%;
+    background:var(--tomato);color:var(--cream);
+    transform:rotate(6deg);
+    animation: stickerIn 0.5s cubic-bezier(.2,.9,.3,1.3) 1.9s forwards, stickerFloat2 5s ease-in-out 2.6s infinite;
+  }
+  @keyframes stickerIn{
+    0%{opacity:0;transform:scale(0.6) rotate(0deg)}
+    100%{opacity:1}
+  }
+  @keyframes stickerFloat{
+    0%,100%{transform:translateY(0) rotate(-8deg)}
+    50%{transform:translateY(-6px) rotate(-10deg)}
+  }
+  @keyframes stickerFloat2{
+    0%,100%{transform:translateY(0) rotate(6deg)}
+    50%{transform:translateY(-8px) rotate(8deg)}
+  }
+
+  @media (max-width:640px){
+    .sticker.s1{top:14%;left:5%}
+    .sticker.s2{bottom:18%;right:5%}
+    .splash{padding:24px}
+  }
+</style>
+</head>
+<body>
+
+<div class="splash">
+
+
+
+  <div class="center">
+    <div class="wordmark" aria-label="liz.studio">
+      <span class="li">li</span><span class="z z1">z</span><span class="dot">.</span><span class="studio">studio</span>
+    </div>
+
+    <div class="tagline">
+      Products with <span class="taste">taste</span>.
+    </div>
+
+    <div class="loader" aria-hidden="true">
+      <div class="loader-fill"></div>
+    </div>
+  </div>
+
+  <div class="bottom">
+    <span>est. 2026</span>
+  </div>
+
+</div>
+
+</body>
+</html>

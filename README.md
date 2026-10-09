@@ -11,13 +11,14 @@ Each app lives under `apps/<name>` and is served at **`https://lizstudio.io/apps
 ## How it fits together
 
 ```
-lizstudio.io/*        ─▶ homepage (hosted elsewhere, untouched)
+www.lizstudio.io/*    ─▶ edge-router Worker ─▶ static homepage (infra/edge-router/public)
+lizstudio.io/*        ─▶ edge-router Worker ─▶ 308 redirect to www
 lizstudio.io/apps/*   ─▶ edge-router Worker ─▶ apps-origin.lizstudio.io ─tunnel─▶ VPS 127.0.0.1:<port> (systemd: liz-<app>)
 ```
 
 - **`factory.json`** is the single source of truth: each app's directory, URL path, and port.
 - **`scripts/factory.mjs`** builds an app with its path as the Next.js `basePath`, installs it as a systemd service (`liz-<name>`), and generates the Cloudflare Tunnel routing rules.
-- **`infra/edge-router`** is a small Cloudflare Worker on the route `lizstudio.io/apps*`. It forwards those requests to the tunnel, so the homepage keeps running wherever it's hosted.
+- **`infra/edge-router`** is the Cloudflare Worker in front of the whole domain. It serves the homepage from `public/` as static assets and forwards `/apps/*` to the tunnel. Edit `public/index.html` to change the homepage.
 - **Cloudflare Tunnel** provides HTTPS without opening any ports on the VPS. It serves only `apps-origin.lizstudio.io` and routes each `/apps/<name>` path to the matching local port.
 
 ## Set up a VPS
@@ -35,15 +36,15 @@ This installs `cloudflared`, builds and starts every app, and turns on auto-depl
 ```bash
 cloudflared tunnel login                       # opens a link: pick lizstudio.io
 cloudflared tunnel create lizstudio
-cloudflared tunnel route dns lizstudio apps-origin.lizstudio.io   # NOT the bare domain: that's the homepage
+cloudflared tunnel route dns lizstudio apps-origin.lizstudio.io   # NOT the bare domain: the Worker owns it
 node scripts/factory.mjs tunnel-config         # writes /etc/cloudflared/config.yml
 sudo cloudflared service install && sudo systemctl restart cloudflared
 
-# Route lizstudio.io/apps* to the tunnel
+# Homepage + route lizstudio.io/apps* to the tunnel
 cd infra/edge-router && npm ci && npx wrangler login && npx wrangler deploy
 ```
 
-Before the nameserver switch, make sure Cloudflare's DNS has the homepage's records (Cloudflare copies most of them when you add the site). Otherwise the homepage goes down.
+`lizstudio.io` and `www` are proxied placeholder records (`AAAA 100::`) so the Worker routes fire. Keep the Zoho MX/SPF/DKIM records when editing DNS, or email breaks.
 
 ## Push to deploy
 

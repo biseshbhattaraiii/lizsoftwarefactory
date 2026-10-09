@@ -1,5 +1,5 @@
-// Sends lizstudio.io/apps/* to the factory VPS (through the Cloudflare Tunnel's
-// hostname). Every other path on lizstudio.io keeps going to the homepage host.
+// Serves the whole lizstudio.io zone: the static homepage (./public) and
+// lizstudio.io/apps/* proxied to the factory VPS through the Cloudflare Tunnel's hostname.
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "liz-edge-router",
@@ -7,11 +7,17 @@
   "compatibility_date": "2026-10-08",
   "workers_dev": false,
   "routes": [
-    { "pattern": "lizstudio.io/apps", "zone_name": "lizstudio.io" },
-    { "pattern": "lizstudio.io/apps/*", "zone_name": "lizstudio.io" }
+    { "pattern": "lizstudio.io/*", "zone_name": "lizstudio.io" },
+    { "pattern": "www.lizstudio.io/*", "zone_name": "lizstudio.io" }
   ],
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
   "vars": {
-    "ORIGIN_HOST": "apps-origin.lizstudio.io"
+    "ORIGIN_HOST": "apps-origin.lizstudio.io",
+    "APEX_HOST": "lizstudio.io"
   },
   "observability": { "enabled": true }
 }

@@ -28,7 +28,7 @@ domain shows "Active" in the Cloudflare dashboard):
 
   cloudflared tunnel login                          # opens a link; pick the domain
   cloudflared tunnel create lizstudio
-  cloudflared tunnel route dns lizstudio apps-origin.lizstudio.io   # never the bare domain: that's the homepage
+  cloudflared tunnel route dns lizstudio apps-origin.lizstudio.io   # never the bare domain: the Worker owns it
   node scripts/factory.mjs tunnel-config
   sudo cloudflared service install && sudo systemctl restart cloudflared
   cd infra/edge-router && npm ci && npx wrangler login && npx wrangler deploy
